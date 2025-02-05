@@ -1,6 +1,5 @@
 import bpy
 import requests
-import json
 
 SERVER_OPTIONS = {
     "Server 1": "http://localhost:3000/",
