@@ -1,5 +1,12 @@
+bl_info = {
+    "name": "DCC Integration Plugin",  # Plugin name
+    "blender": (2, 82, 0),  # Specify the minimum Blender version required
+    "category": "Object",  # Define which category this addon belongs to (e.g., Object, Mesh, etc.)
+}
+
 import bpy
 import requests
+
 
 # Dictionary for server options with corresponding URLs
 SERVER_OPTIONS = {
