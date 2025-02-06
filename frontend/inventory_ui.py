@@ -113,6 +113,34 @@ class UpdateItemThread(QThread):
         except Exception as e:
             self.item_updated.emit(False, f"Unexpected error: {str(e)}")
 
+class DeleteItemThread(QThread):
+    item_deleted = Signal(bool, str)
+
+    def __init__(self, name):
+        super().__init__()
+        self.name = name
+
+    def run(self):
+        try:
+            response = requests.delete(
+                f"{API_BASE_URL}/remove-item",
+                json={"name": self.name},
+                timeout=TIMEOUT_SECONDS
+            )
+            response.raise_for_status()
+            data = response.json()
+            if response.status_code == 200 and data.get("message") == "Item removed successfully":
+                self.item_deleted.emit(True, f"Item {self.name} removed successfully.")
+            else:
+                self.item_deleted.emit(False, data.get("error", "Error removing item."))
+        except requests.exceptions.Timeout:
+            self.item_deleted.emit(False, "Request timed out. Try again later.")
+        except requests.exceptions.RequestException as e:
+            d = response.json()
+            self.item_deleted.emit(False,   f"Error: {str(d.get('error', e))}")
+        except Exception as e:
+            self.item_deleted.emit(False, f"Unexpected error: {str(e)}")
+
 class InventoryApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -163,12 +191,17 @@ class InventoryApp(QWidget):
         self.update_button.setStyleSheet("background-color: #FF9800; color: white; border-radius: 5px; padding: 10px;")
         self.update_button.clicked.connect(self.update_item)
 
+        self.delete_button = QPushButton("Delete Item")
+        self.delete_button.setStyleSheet("background-color: #F44336; color: white; border-radius: 5px; padding: 10px;")
+        self.delete_button.clicked.connect(self.delete_item)
+
         form_layout.addWidget(QLabel("Name:"))
         form_layout.addWidget(self.name_input)
         form_layout.addWidget(QLabel("Quantity:"))
         form_layout.addWidget(self.quantity_input)
         form_layout.addWidget(self.add_button)
         form_layout.addWidget(self.update_button)
+        form_layout.addWidget(self.delete_button)
 
         self.layout.addLayout(form_layout)
 
@@ -251,7 +284,26 @@ class InventoryApp(QWidget):
             self.quantity_input.clear()
             self.load_inventory()
 
+    def delete_item(self):
+        name = self.name_input.text().strip()
 
+        if not name:
+            self.status_label.setText("Item name cannot be empty.")
+            QTimer.singleShot(2000, lambda: self.status_label.clear())
+            return
+
+        self.status_label.setText("Deleting item...")
+
+        self.delete_worker = DeleteItemThread(name)
+        self.delete_worker.item_deleted.connect(self.handle_delete_item_response)
+        self.delete_worker.start()
+
+    def handle_delete_item_response(self, success, message):
+        self.status_label.setText(message)
+        QTimer.singleShot(2000, lambda: self.status_label.clear())
+        if success:
+            self.name_input.clear()
+            self.load_inventory()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
