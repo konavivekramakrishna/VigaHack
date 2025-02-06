@@ -86,10 +86,14 @@ class InventoryApp(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Inventory Management")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(300, 300, 1000, 600)
 
         self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(50, 50, 50, 50)
+        self.layout.setContentsMargins(10, 10, 10, 10)
+
+        # Create a layout to center the table horizontally
+        table_layout = QHBoxLayout()
+        table_layout.addStretch()  # Adds flexible space before the table
 
         self.table = QTableView()
         self.table.setFont(QFont("Arial", 12))
@@ -97,8 +101,12 @@ class InventoryApp(QWidget):
         self.table.setEditTriggers(QTableView.NoEditTriggers)
         self.table.setSelectionBehavior(QTableView.SelectRows)
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.table.setMinimumWidth(400)  # Ensuring a wider table
 
-        self.layout.addWidget(self.table)
+        table_layout.addWidget(self.table, 2)  # Stretch factor to make table take more space
+        table_layout.addStretch()  # Adds flexible space after the table
+
+        self.layout.addLayout(table_layout)
 
         self.progress_bar = QProgressBar(self)
         self.progress_bar.setRange(0, 0)
@@ -136,8 +144,10 @@ class InventoryApp(QWidget):
         self.model = InventoryModel([])
         self.table.setModel(self.model)
 
-        self.table.setColumnWidth(0, 300)  
-        self.table.setColumnWidth(1, 200)  
+        # Ensure the table stretches to fit the width dynamically
+        self.table.setColumnWidth(0, 400)  
+        self.table.setColumnWidth(1, 300)
+        self.table.horizontalHeader().setStretchLastSection(True)
 
         self.load_inventory()
 
