@@ -82,6 +82,37 @@ class AddItemThread(QThread):
         except Exception as e:
             self.item_added.emit(False, f"Unexpected error: {str(e)}")
 
+class UpdateItemThread(QThread):
+    item_updated = Signal(bool, str)
+
+    def __init__(self, name, quantity):
+        super().__init__()
+        self.name = name
+        self.quantity = quantity
+
+    def run(self):
+        try:
+            response = requests.put(
+                f"{API_BASE_URL}/update-quantity",
+                json={"name": self.name, "quantity": int(self.quantity)},
+                timeout=TIMEOUT_SECONDS
+            )
+            response.raise_for_status()
+
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("message") == "Quantity updated successfully":
+                    self.item_updated.emit(True, "Quantity updated successfully.")
+                else:
+                    self.item_updated.emit(False, data.get("error", "Error updating quantity."))
+        except requests.exceptions.Timeout:
+            self.item_updated.emit(False, "Request timed out. Try again later.")
+        except requests.exceptions.RequestException as e:
+            d = response.json()
+            self.item_updated.emit(False, f"Error: {str(d.get('error', e))}")
+        except Exception as e:
+            self.item_updated.emit(False, f"Unexpected error: {str(e)}")
+
 class InventoryApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -128,11 +159,16 @@ class InventoryApp(QWidget):
         self.add_button.setStyleSheet("background-color: #2196F3; color: white; border-radius: 5px; padding: 10px;")
         self.add_button.clicked.connect(self.add_item)
 
+        self.update_button = QPushButton("Update Item")
+        self.update_button.setStyleSheet("background-color: #FF9800; color: white; border-radius: 5px; padding: 10px;")
+        self.update_button.clicked.connect(self.update_item)
+
         form_layout.addWidget(QLabel("Name:"))
         form_layout.addWidget(self.name_input)
         form_layout.addWidget(QLabel("Quantity:"))
         form_layout.addWidget(self.quantity_input)
         form_layout.addWidget(self.add_button)
+        form_layout.addWidget(self.update_button)
 
         self.layout.addLayout(form_layout)
 
@@ -191,6 +227,31 @@ class InventoryApp(QWidget):
             self.name_input.clear()
             self.quantity_input.clear()
             self.load_inventory()
+
+    def update_item(self):
+        name = self.name_input.text().strip()
+        quantity = self.quantity_input.text().strip()
+
+        if not name or not quantity.isdigit() or int(quantity) <= 0:
+            self.status_label.setText("Invalid input. Enter a valid name and quantity.")
+            QTimer.singleShot(2000, lambda: self.status_label.clear())
+            return
+
+        self.status_label.setText("Updating item...")
+
+        self.update_worker = UpdateItemThread(name, quantity)
+        self.update_worker.item_updated.connect(self.handle_update_item_response)
+        self.update_worker.start()
+
+    def handle_update_item_response(self, success, message):
+        self.status_label.setText(message)
+        QTimer.singleShot(2000, lambda: self.status_label.clear())
+        if success:
+            self.name_input.clear()
+            self.quantity_input.clear()
+            self.load_inventory()
+
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
