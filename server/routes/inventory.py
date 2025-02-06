@@ -1,5 +1,5 @@
 from flask import Blueprint, request
-from services.inventory import add_item, remove_item, update_quantity
+from services.inventory import add_item, remove_item, update_quantity, get_items
 from utils.responses import success_response, error_response
 from utils.delayed_response import delayed_response
 import logging
@@ -10,7 +10,8 @@ inventory_bp = Blueprint("inventory", __name__)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-@inventory_bp.route('/add-item', methods=['POST'])
+
+@inventory_bp.route("/add-item", methods=["POST"])
 def add_item_route():
     try:
         data = request.json
@@ -22,10 +23,18 @@ def add_item_route():
     if not name or quantity is None:
         return delayed_response(error_response("Missing name or quantity"))
 
-    success, result = add_item(name, quantity)
-    return delayed_response(success_response("Item added successfully", result) if success else error_response(result))
+    if not isinstance(quantity, int):
+        return delayed_response(error_response("Quantity must be an integer"))
 
-@inventory_bp.route('/remove-item', methods=['DELETE'])
+    success, result = add_item(name, quantity)
+    return delayed_response(
+        success_response("Item added successfully", result, 201)
+        if success
+        else error_response(result)
+    )
+
+
+@inventory_bp.route("/remove-item", methods=["DELETE"])
 def remove_item_route():
     try:
         data = request.json
@@ -38,9 +47,14 @@ def remove_item_route():
         return delayed_response(error_response("Missing name"))
 
     success, result = remove_item(name)
-    return delayed_response(success_response("Item removed successfully", result) if success else error_response(result, 404))
+    return delayed_response(
+        success_response("Item removed successfully", result)
+        if success
+        else error_response(result, 404)
+    )
 
-@inventory_bp.route('/update-quantity', methods=['PUT'])
+
+@inventory_bp.route("/update-quantity", methods=["PUT"])
 def update_quantity_route():
     try:
         data = request.json
@@ -52,5 +66,23 @@ def update_quantity_route():
     if not name or quantity is None:
         return delayed_response(error_response("Missing name or quantity"))
 
+    if not isinstance(quantity, int):
+        return delayed_response(error_response("Quantity must be an integer"))
+
     success, result = update_quantity(name, quantity)
-    return delayed_response(success_response("Quantity updated successfully", result) if success else error_response(result, 404))
+    return delayed_response(
+        success_response("Quantity updated successfully", result)
+        if success
+        else error_response(result, 404)
+    )
+
+
+@inventory_bp.route("/get-items", methods=["GET"])
+def get_items_route():
+
+    success, result = get_items()
+    return delayed_response(
+        success_response("Items retrieved successfully", result)
+        if success
+        else error_response(result, 404)
+    )

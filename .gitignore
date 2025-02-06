@@ -1,26 +1,58 @@
-#   Python virtual environments
+# Python virtual environments
 venv/
+env/
 **/venv/
+*.venv/
 
-#   logs and temp files
+# Logs and temp files
+logs/
 *.log
 **/*.log
 *.tmp
 **/*.tmp
 
-#   specific folders globally
+# Specific folders globally
 **/node_modules/
 **/__pycache__/
 
-#   all config folders except production
+# All config folders except production
 config/
 !config/prod/
 
-#   database files
+# Database files
 *.sqlite3
 **/*.sqlite3
+*.db
 
-# env files
+# Environment files
 **/.env
 
-*.db
+# Byte-compiled / optimized / DLL files
+*.py[cod]
+*.so
+*.dll
+*.dylib
+*.pyd
+
+# PyInstaller build files
+build/
+dist/
+*.spec
+
+# System-specific files
+.DS_Store
+Thumbs.db
+
+# Cache files
+.cache/
+*.egg-info/
+*.pyc
+
+# Ignore all executables
+**/*.exe
+**/*.out
+**/*.bin
+**/*.app
+**/*.sh
+**/*.zip
+**/*.tar.gz
