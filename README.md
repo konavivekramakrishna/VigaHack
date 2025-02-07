@@ -1,6 +1,7 @@
 # DCC Integration Plugin and Server
 
 This project integrates a Digital Content Creation (DCC) application (Blender) with a local server to manage object transforms and a simple inventory system. The project includes a Blender plugin, a Flask server, an SQLite database, and a PySide6 UI for inventory management.
+Video Demo : [Link](https://www.loom.com/share/cec90104d2f24a8593372e5f7673d782?sid=23eda9ed-9394-4b1b-bcf8-eab8a95b0347)
 
 ## Table of Contents
 
